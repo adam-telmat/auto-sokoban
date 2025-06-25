@@ -1,0 +1,17 @@
+# 🚀 SOKOBAN 3025 - DÉPENDANCES FUTURISTES 🚀
+# Installation : pip install -r requirements_3025.txt
+
+# Core game engine
+pygame>=2.5.0
+
+# Enhanced audio processing
+numpy>=1.24.0
+
+# JSON configuration
+# (inclus dans Python standard)
+
+# Pillow pour traitement d'images avancé (optionnel)
+Pillow>=10.0.0
+
+# Performance monitoring (optionnel)
+psutil>=5.9.0 
