@@ -1,8 +1,3 @@
-"""
-🧠 SOUNDS.PY - SYSTÈME AUDIO GÉNIE 🧠
-Gestion des sons et musique avec Pygame
-Architecture modulaire pour expérience immersive
-"""
 
 import pygame
 import os

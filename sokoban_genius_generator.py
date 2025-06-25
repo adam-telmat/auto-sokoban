@@ -1,12 +1,3 @@
-"""
-🧠 GÉNÉRATEUR DE NIVEAUX GÉNIE 900 IQ 🧠
-Génération inverse pour garantie de solvabilité à 100%
-
-PRINCIPE RÉVOLUTIONNAIRE :
-1. Commencer par l'état FINAL (toutes caisses sur objectifs)
-2. "Défaire" des mouvements pour créer l'état initial
-3. IMPOSSIBLE d'avoir un niveau non-solvable !
-"""
 
 import random
 import copy

@@ -1,8 +1,3 @@
-"""
-🧠 DATABASE.PY - PERSISTANCE GÉNIE 🧠
-Système de base de données SQLite pour scores et progression
-Architecture sécurisée avec gestion d'erreurs robuste
-"""
 
 import sqlite3
 import json

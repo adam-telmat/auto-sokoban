@@ -1,8 +1,3 @@
-"""
-🧠 GAME.PY - LOGIQUE PRINCIPALE GÉNIE 🧠
-Orchestrateur du jeu avec gestion niveaux et états
-Architecture inspirée du système ECS Rust
-"""
 
 import time
 from typing import Optional, Dict, Any

@@ -1,8 +1,3 @@
-"""
-🧠 UI.PY - INTERFACE GRAPHIQUE GÉNIE 🧠
-Rendu visuel moderne avec Pygame
-Design responsive et expérience utilisateur optimale
-"""
 
 import pygame
 import time

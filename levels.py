@@ -1,8 +1,3 @@
-"""
-🧠 LEVELS.PY - GESTIONNAIRE DE NIVEAUX GÉNIE 🧠
-Collection de niveaux avec difficulté progressive
-Système extensible pour ajout de nouveaux défis
-"""
 
 from typing import List, Dict, Optional
 from board import TileType

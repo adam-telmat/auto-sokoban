@@ -1,9 +1,3 @@
-"""
-🧠 BOARD.PY - LOGIQUE DU PLATEAU GÉNIE 🧠
-Représentation matricielle et validation des mouvements
-Inspiré de l'architecture Rust avec optimisations Python
-"""
-
 import copy
 from typing import List, Tuple, Dict, Optional
 from enum import IntEnum

@@ -1,13 +1,3 @@
-"""
-🚀 SOKOBAN 3025 - LE JEU DU FUTUR ! 🚀
-Version futuriste ultime avec assets originaux + effets année 3025
-
-Règles strictes :
-- Nombre caisses = nombre emplacements (validation obligatoire)
-- Difficulté crescendo
-- Niveau terminé quand TOUTES les caisses sont placées
-- Effets visuels futuristes de ouf !
-"""
 
 import pygame
 import sys

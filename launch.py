@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-🧠 LANCEUR SOKOBAN GÉNIE 🧠
-Script de lancement avec gestion automatique des imports
-"""
 
 import os
 import sys

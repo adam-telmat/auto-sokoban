@@ -1,7 +1,3 @@
-"""
-🚀 LAUNCHER SOKOBAN 3025 🚀
-Menu futuriste de lancement avec configuration et sélection de niveau
-"""
 
 import pygame
 import sys

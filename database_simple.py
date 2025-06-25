@@ -1,7 +1,3 @@
-"""
-🧠 DATABASE SIMPLE - PERSISTANCE GÉNIE 🧠
-Système de base de données SQLite simplifié
-"""
 
 import sqlite3
 import json

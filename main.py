@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-🧠 SOKOBAN PYTHON GÉNIE - MODE 900 IQ 🧠
-Point d'entrée principal du jeu
-Inspiré de l'architecture Rust mais adapté en Python
-"""
 
 import pygame
 import sys
