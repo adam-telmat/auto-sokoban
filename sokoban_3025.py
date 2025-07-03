@@ -5,6 +5,7 @@ import os
 import random
 import math
 import time
+import heapq
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -32,6 +33,232 @@ class GameStats:
     score: int = 0
     combo_multiplier: int = 1
     perfect_placements: int = 0
+
+class SokobanSolver:
+    """Solveur automatique pour Sokoban avec algorithme A*"""
+    
+    def __init__(self, game):
+        self.game = game
+        self.solving = False
+        self.solution_path = []
+        self.solution_index = 0
+        self.counter = 0
+        
+    def solve_level(self):
+        """Lance la résolution du niveau actuel"""
+        print("🧠 ACTIVATION DU SOLVEUR QUANTIQUE...")
+        
+        # Créer état initial
+        initial_state = self._create_state(self.game.board, self.game.player_pos)
+        
+        # Algorithme A* pour trouver solution
+        solution = self._a_star_search(initial_state)
+        
+        if solution:
+            self.solution_path = solution
+            self.solution_index = 0
+            self.solving = True
+            print(f"✅ Solution trouvée en {len(solution)} mouvements!")
+            return True
+        else:
+            print("❌ Aucune solution trouvée pour ce niveau!")
+            return False
+    
+    def _create_state(self, board, player_pos):
+        """Crée un état de jeu hashable"""
+        boxes = []
+        goals = []
+        
+        for y in range(len(board)):
+            for x in range(len(board[0])):
+                cell = board[y][x]
+                if cell == TileType.BOX.value:
+                    boxes.append((x, y))
+                elif cell == TileType.BOX_ON_GOAL.value:
+                    boxes.append((x, y))
+                    goals.append((x, y))
+                elif cell == TileType.GOAL.value:
+                    goals.append((x, y))
+        
+        return {
+            'player': tuple(player_pos),
+            'boxes': frozenset(boxes),
+            'goals': frozenset(goals),
+            'board': tuple(tuple(row) for row in board)
+        }
+    
+    def _a_star_search(self, initial_state):
+        """Algorithme A* pour résoudre le Sokoban"""
+        from heapq import heappush, heappop
+        
+        open_set = []
+        # Ajouter counter pour éviter comparaison de dictionnaires
+        heappush(open_set, (0, 0, self.counter, initial_state, []))
+        self.counter += 1
+        closed_set = set()
+        
+        iterations = 0
+        max_iterations = 10000  # Limite pour éviter blocage
+        
+        while open_set and iterations < max_iterations:
+            iterations += 1
+            f_score, g_score, _, current_state, path = heappop(open_set)  # Ignorer counter avec _
+            
+            # Créer clé unique pour l'état
+            state_key = (current_state['player'], current_state['boxes'])
+            
+            if state_key in closed_set:
+                continue
+            
+            closed_set.add(state_key)
+            
+            # Vérifier si solution trouvée
+            if self._is_solved(current_state):
+                return path
+            
+            # Explorer mouvements possibles
+            for direction in [(0, -1), (0, 1), (-1, 0), (1, 0)]:  # Haut, Bas, Gauche, Droite
+                new_state, move = self._try_move(current_state, direction)
+                
+                if new_state:
+                    new_state_key = (new_state['player'], new_state['boxes'])
+                    
+                    if new_state_key not in closed_set:
+                        new_g_score = g_score + 1
+                        h_score = self._heuristic(new_state)
+                        f_score = new_g_score + h_score
+                        
+                        new_path = path + [move]
+                        # Ajouter counter pour éviter comparaison de dictionnaires
+                        heappush(open_set, (f_score, new_g_score, self.counter, new_state, new_path))
+                        self.counter += 1
+        
+        print(f"🔍 Solveur: {iterations} itérations explorées")
+        return None  # Aucune solution trouvée
+    
+    def _try_move(self, state, direction):
+        """Essaie un mouvement et retourne nouvel état si valide"""
+        dx, dy = direction
+        px, py = state['player']
+        new_px, new_py = px + dx, py + dy
+        
+        # Vérifier limites de façon sécurisée
+        board = state['board']
+        if (new_px < 0 or new_px >= len(board[0]) or 
+            new_py < 0 or new_py >= len(board)):
+            return None, None
+        
+        # Vérifier mur de façon sécurisée
+        try:
+            if board[new_py][new_px] == TileType.WALL.value:
+                return None, None
+        except IndexError:
+            return None, None
+        
+        # Position libre - mouvement simple
+        if (new_px, new_py) not in state['boxes']:
+            new_state = state.copy()
+            new_state['player'] = (new_px, new_py)
+            return new_state, direction
+        
+        # Caisse à pousser
+        box_new_x, box_new_y = new_px + dx, new_py + dy
+        
+        # Vérifier si peut pousser caisse
+        if (box_new_x < 0 or box_new_x >= len(board[0]) or
+            box_new_y < 0 or box_new_y >= len(board)):
+            return None, None
+        
+        try:
+            if board[box_new_y][box_new_x] == TileType.WALL.value:
+                return None, None
+        except IndexError:
+            return None, None
+        
+        if (box_new_x, box_new_y) in state['boxes']:
+            return None, None
+        
+        # Vérifier deadlock simple
+        if self._is_deadlock(state, (box_new_x, box_new_y)):
+            return None, None
+        
+        # Mouvement valide avec push
+        new_boxes = set(state['boxes'])
+        new_boxes.remove((new_px, new_py))
+        new_boxes.add((box_new_x, box_new_y))
+        
+        new_state = state.copy()
+        new_state['player'] = (new_px, new_py)
+        new_state['boxes'] = frozenset(new_boxes)
+        
+        return new_state, direction
+    
+    def _is_deadlock(self, state, box_pos):
+        """Détection basique des deadlocks"""
+        x, y = box_pos
+        board = state['board']
+        
+        # Vérifier limites
+        if (x <= 0 or x >= len(board[0])-1 or 
+            y <= 0 or y >= len(board)-1):
+            return False
+        
+        # Si caisse pas sur objectif, vérifier corners
+        if box_pos not in state['goals']:
+            # Vérifier coin (mur-mur) de façon sécurisée
+            try:
+                corners = [
+                    (board[y-1][x] == TileType.WALL.value and board[y][x-1] == TileType.WALL.value),
+                    (board[y-1][x] == TileType.WALL.value and board[y][x+1] == TileType.WALL.value),
+                    (board[y+1][x] == TileType.WALL.value and board[y][x-1] == TileType.WALL.value),
+                    (board[y+1][x] == TileType.WALL.value and board[y][x+1] == TileType.WALL.value)
+                ]
+                
+                if any(corners):
+                    return True
+            except IndexError:
+                # En cas d'erreur d'index, considérer comme non-deadlock
+                return False
+    
+        return False
+    
+    def _is_solved(self, state):
+        """Vérifie si toutes les caisses sont sur objectifs"""
+        return state['boxes'] == state['goals']
+    
+    def _heuristic(self, state):
+        """Heuristique : distance Manhattan minimale caisses->objectifs"""
+        boxes = list(state['boxes'])
+        goals = list(state['goals'])
+        
+        if not boxes or not goals:
+            return 0
+        
+        total_distance = 0
+        for box in boxes:
+            min_dist = min(abs(box[0] - goal[0]) + abs(box[1] - goal[1]) for goal in goals)
+            total_distance += min_dist
+        
+        return total_distance
+    
+    def execute_next_move(self):
+        """Exécute le prochain mouvement de la solution"""
+        if not self.solving or self.solution_index >= len(self.solution_path):
+            self.solving = False
+            return False
+        
+        direction = self.solution_path[self.solution_index]
+        dx, dy = direction
+        
+        success = self.game.move_player(dx, dy)
+        
+        if success:
+            self.solution_index += 1
+        else:
+            print("❌ Erreur lors de l'exécution de la solution")
+            self.solving = False
+        
+        return success
 
 class Sokoban3025:
     """🚀 SOKOBAN DE L'AN 3025 🚀"""
@@ -61,7 +288,11 @@ class Sokoban3025:
         self.screen_shake = {'intensity': 0, 'duration': 0}
         self.level_transition_effect = {'active': False, 'progress': 0}
         self.combo_timer = 0
-        
+
+        # Solveur automatique
+        self.solver = SokobanSolver(self)
+        self.auto_solve_timer = 0
+                
         # Historique pour undo futuriste
         self.move_history = []
         
@@ -670,6 +901,7 @@ class Sokoban3025:
             "FLÈCHES: Mouvement cybernétique",
             "U: Manipulation temporelle (Undo)",
             "R: Réinitialisation quantique",
+            "I: Solveur automatique IA",
             "ESC: Retour au menu spatial"
         ]
         
@@ -726,6 +958,21 @@ class Sokoban3025:
                 
                 elif event.key == pygame.K_r:
                     self.load_level(self.current_level)
+
+                elif event.key == pygame.K_i:
+                    if not self.solver.solving:
+                        success = self.solver.solve_level()
+                        if success:
+                            self.auto_solve_timer = 0
+                        else:
+                            # Créer effet visuel d'échec
+                            center_pos = (self.SCREEN_WIDTH//2, self.SCREEN_HEIGHT//2)
+                            fail_particles = self.assets.create_particle_effect('wall_impact', center_pos)
+                            self.particles.extend(fail_particles)
+                    else:
+                        # Arrêter résolution en cours
+                        self.solver.solving = False
+                        print("🛑 Résolution automatique arrêtée")
                 
                 elif event.key == pygame.K_n and self.is_level_complete():
                     if self.current_level < self.max_levels:
@@ -748,6 +995,13 @@ class Sokoban3025:
         running = True
         while running:
             running = self.handle_events()
+
+            # Exécution automatique du solveur
+            if self.solver.solving:
+                self.auto_solve_timer += 1
+                if self.auto_solve_timer >= 30:  # Délai entre mouvements (30 frames = 0.5s à 60fps)
+                    self.solver.execute_next_move()
+                    self.auto_solve_timer = 0
             
             # Vérification victoire automatique
             if self.is_level_complete() and not self.level_transition_effect['active']:
